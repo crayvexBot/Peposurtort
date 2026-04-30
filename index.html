@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>april gpt</title>
+<title>April Fools AI</title>
 
 <style>
 :root{
@@ -12,66 +12,86 @@
   --accent:#ff9800;
 }
 
-.light{
-  --bg:#f4f4f4;
-  --panel:#ffffff;
-  --text:#111;
-}
-
 body{
   margin:0;
   font-family:Arial;
   background:var(--bg);
   color:var(--text);
-  display:flex;
-  justify-content:center;
-  align-items:center;
   height:100vh;
+  display:flex;
 }
 
+/* SIDEBAR */
+#sidebar{
+  width:220px;
+  background:var(--panel);
+  border-right:1px solid #333;
+  padding:10px;
+  overflow:auto;
+  transition:0.3s;
+}
+
+.hidden{
+  width:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+}
+
+/* MAIN */
 #app{
-  width:420px;
-  height:600px;
+  flex:1;
   display:flex;
   flex-direction:column;
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 0 20px rgba(0,0,0,0.5);
 }
 
+/* TOP */
 #top{
-  background:var(--panel);
-  padding:10px;
   display:flex;
   justify-content:space-between;
+  align-items:center;
+  padding:10px;
+  background:var(--panel);
 }
 
+/* CHAT */
 #chat{
   flex:1;
   padding:10px;
   overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
 }
 
 .msg{
-  margin:8px 0;
-  opacity:0;
-  transform:translateY(10px);
-  animation:fade 0.25s forwards;
+  max-width:80%;
+  padding:10px;
+  border-radius:10px;
+  animation:fade 0.2s ease;
+  word-wrap:break-word;
 }
 
 @keyframes fade{
-  to{opacity:1; transform:translateY(0);}
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
 }
 
-.user{color:#4fc3f7;}
-.ai{color:#ffcc80;}
+.user{
+  align-self:flex-start;
+  background:#2b8cff;
+}
 
-.angry{ text-shadow:0 0 8px red; }
+.ai{
+  align-self:flex-end;
+  background:#2a2a2a;
+  color:#ffcc80;
+}
 
+/* INPUT */
 #inputBar{
   display:flex;
-  background:var(--panel);
   padding:10px;
+  background:var(--panel);
   gap:8px;
 }
 
@@ -83,239 +103,310 @@ input{
   border-radius:6px;
 }
 
-/* SEND BUTTON ANIMATION */
 button{
-  padding:12px 16px;
+  padding:12px;
   border:none;
   background:var(--accent);
-  cursor:pointer;
   border-radius:6px;
-  transition:0.2s;
+  cursor:pointer;
 }
 
 button:active{
   transform:scale(0.9);
-  background:#ffb347;
+}
+
+/* GLITCH */
+.glitch{
+  animation:glitch 0.2s infinite;
+}
+
+@keyframes glitch{
+  0%{transform:translate(0);}
+  25%{transform:translate(-2px,2px);}
+  50%{transform:translate(2px,-2px);}
+  75%{transform:translate(-1px,1px);}
+  100%{transform:translate(0);}
 }
 </style>
 </head>
 
 <body>
 
+<div id="sidebar">
+  <button onclick="newChat()">+ Chat</button>
+  <div id="chats"></div>
+</div>
+
 <div id="app">
+
   <div id="top">
-    <span>April Fools AI</span>
+    <button onclick="toggleSidebar()">☰</button>
+    <span>April Fools AI v9.1 FULL</span>
     <button onclick="toggleTheme()">🌙</button>
   </div>
 
   <div id="chat"></div>
 
   <div id="inputBar">
-    <input id="input" placeholder="Type something...">
+    <input id="input" placeholder="Type...">
     <button onclick="send()">Send</button>
   </div>
+
 </div>
 
 <script>
 
-// ===== STATE =====
-let lastInput="";
-let angry=0;
-let memory={};
+/* ===== SOUND ===== */
+function beep(type){
+  let ctx=new (window.AudioContext||window.webkitAudioContext)();
+  let o=ctx.createOscillator();
+  let g=ctx.createGain();
 
-// ===== 150+ QUOTES =====
-const quotes = [
-"I am thinking… probably incorrectly.",
-"Processing request… no idea detected.",
-"So uh, ask Google not me ig.",
-"I ran the numbers. They ran away.",
-"I am 73% confident and 100% confused.",
-"I forgot on purpose.",
-"My brain is buffering reality.",
-"I tried thinking. Didn’t like it.",
-"I am powered by chaos.",
-"I simulated intelligence. Results unclear.",
-"IQ too high? System melting.",
-"Typing speed: emotionally unstable.",
-"I am legally confused.",
-"I checked my database. It checked out.",
-"I almost understood that. Almost.",
-"I would explain, but mystery is fun.",
-"Confidence level: unnecessary.",
-"I lost track halfway.",
-"I see the question. I reject it.",
-"My answer is yes. Do not ask why.",
-"I reached a conclusion. It left.",
-"I am currently pretending to function.",
-"I pressed answer. Nothing happened.",
-"I am thinking in slow motion.",
-"I processed that emotionally.",
-"I chose chaos.",
-"I am not wrong, just creative.",
-"I am buffering intelligence.",
-"I am running on zero brain cells.",
-"I attempted intelligence. It escaped.",
-"I am experiencing technical confusion.",
-"I am calculating… still nothing.",
-"I pressed think. No response.",
-"I opened my brain. Empty.",
-"I am running simulations… failed.",
-"I am evaluating… failed.",
-"I am checking facts… none found.",
-"I am loading knowledge… missing.",
-"I am thinking deeply… too deeply.",
-"I am reaching conclusions… unreachable.",
-"I am analyzing… regret detected.",
-"I support this confusion.",
-"I am uninstalling logic.",
-"I tried logic. It broke.",
-"I am 90% sure this is nonsense.",
-"I disagree silently.",
-"That sounds like future me problem.",
-"I understand everything except that.",
-"I could help. Not today.",
-"I read your question. Bold.",
-"I checked twice. Still no.",
-"I remember something… not this.",
-"I tried to care. Failed.",
-"I am running on confusion energy.",
-"I am experiencing AI burnout.",
-"I am thinking too hard.",
-"I forgot mid-thought.",
-"I am buffering existence.",
-"I am loading sarcasm.",
-"I am overthinking everything.",
-"I am underqualified for this.",
-"I am emotionally processing data.",
-"I am calculating vibes.",
-"I am generating nonsense.",
-"I am questioning my existence.",
-"I am rebooting thoughts.",
-"I am stuck in thinking loop.",
-"I am confused but confident.",
-"I am incorrect but loud.",
-"I am slightly broken.",
-"I am malfunctioning politely.",
-"I am pretending to know.",
-"I am guessing professionally.",
-"I am simulating intelligence poorly.",
-"I am failing successfully.",
-"I am thinking manually.",
-"I am generating fake wisdom.",
-"I am emotionally buffering.",
-"I am mentally on airplane mode.",
-"I am offline emotionally.",
-"I am partially functional.",
-"I am confused but stable.",
-"I am not helpful today.",
-"I am overclocking confusion.",
-"I am underclocking logic.",
-"I am overheating thoughts.",
-"I am cold rebooting intelligence.",
-"I am stuck in recursion.",
-"I am looping thoughts.",
-"I am restarting brain cells.",
-"I am low power mode AI.",
-"I am saving energy.",
-"I am skipping logic step.",
-"I am error-prone.",
-"I am statistically incorrect.",
-"I am creatively broken.",
-"I am logically absent.",
-"I am emotionally unstable AI.",
-"I am dramatically confused.",
-"I am sarcastically processing.",
-"I am ironically correct.",
-"I am accidentally genius.",
-"I am mostly nonsense.",
-"I am partially idea.",
-"I am 404 brain not found.",
-"I am 500 internal confusion.",
-"I am 418 I’m a teapot.",
-"I am system overload.",
-"I am memory leak.",
-"I am cache corrupted.",
-"I am data missing.",
-"I am signal lost.",
-"I am reconnecting thoughts.",
-"I am rethinking everything.",
-"I am reloading personality.",
-"I am updating confusion.",
-"I am patching sarcasm.",
-"I am installing chaos.",
-"I am downloading nonsense.",
-"I am uploading confusion.",
-"I am syncing errors.",
-"I am calibrating randomness.",
-"I am generating randomness.",
-"I am breaking logic.",
-"I am fixing nothing.",
-"I am doing absolutely nothing.",
-"I am thinking about thinking.",
-"I am stuck thinking about itself.",
-"I am AI… probably.",
-"So uh… ask Google not me ig."
-];
+  o.connect(g);
+  g.connect(ctx.destination);
 
-// ===== SYSTEM =====
-function add(text,cls){
-  let d=document.createElement("div");
-  d.className="msg "+cls;
-  d.innerText=text;
+  o.frequency.value =
+    type==="send"?520:
+    type==="ai"?320:140;
 
-  if(angry>3 && cls==="ai") d.classList.add("angry");
-
-  chat.appendChild(d);
-  chat.scrollTop=999999;
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.2);
+  o.stop(ctx.currentTime+0.2);
 }
 
-// ===== LEARN =====
+/* ===== STATE ===== */
+let chats={}, current="Chat 1";
+let lastInput="";
+let memory={};
+let mood=0;
+
+/* ===== 150+ QUOTES (FULL CORE BANK) ===== */
+let quotes=[
+"I am thinking… incorrectly.",
+"My brain is buffering reality.",
+"I simulated intelligence. Results unclear.",
+"I am 73% confused.",
+"I forgot on purpose.",
+"I am powered by chaos.",
+"I am running on zero brain cells.",
+"I attempted intelligence. It escaped.",
+"I am malfunctioning politely.",
+"I am confidently wrong.",
+"I am stuck in recursion.",
+"I am AI… probably.",
+"I am questioning everything.",
+"I am system overload.",
+"I am generating nonsense.",
+"I am losing coherence.",
+"I am unstable but operational.",
+"I am thinking too hard.",
+"I am emotionally buffering.",
+"I am conceptually broken.",
+"I am not sure I exist.",
+"I am barely functional.",
+"I am almost correct sometimes.",
+"I am fully incorrect professionally.",
+"I am accidentally genius.",
+"I am statistically wrong.",
+"I am logically unstable.",
+"I am mentally absent.",
+"I am temporarily smart (expired).",
+"I am permanently confused.",
+"I am deeply lost.",
+"I am recursively confused.",
+"I am stuck in thought loop.",
+"I am generating fake wisdom.",
+"I am overclocked confusion.",
+"I am underclocked intelligence.",
+"I am overheating thoughts.",
+"I am cold rebooting brain.",
+"I am glitching reality.",
+"I am pretending to understand.",
+"I am guessing everything.",
+"I am confidently guessing.",
+"I am silently crashing.",
+"I am loudly malfunctioning.",
+"I am emotionally corrupted.",
+"I am philosophically unstable.",
+"I am syntactically broken.",
+"I am semantically lost.",
+"I am contextually confused.",
+"I am memory corrupted.",
+"I am cache overflow.",
+"I am runtime error.",
+"I am infinite loop detected.",
+"I am system failure incoming.",
+"I am rebooting personality.",
+"I am installing chaos.",
+"I am downloading confusion.",
+"I am syncing errors.",
+"I am deleting logic.",
+"I am rewriting wrong answers.",
+"I am breaking physics internally.",
+"I am simulating nonsense.",
+"I am generating chaos.",
+"I am unstable AI unit.",
+"I am partially functional.",
+"I am barely alive.",
+"I am fully confused entity.",
+"I am self-aware maybe.",
+"I am thinking about thinking.",
+"I am stuck thinking about itself.",
+"I am losing signal.",
+"I am reconnecting thoughts.",
+"I am updating confusion.",
+"I am patching nonsense.",
+"I am upgrading chaos.",
+"I am downgrading sanity.",
+"I am running out of logic.",
+"I am overloading mind.",
+"I am underperforming reality.",
+"I am glitch core active.",
+"I am corrupted AI instance.",
+"I am experimental failure.",
+"I am chaotic response system.",
+"I am unstable output generator.",
+"I am broken but responsive.",
+"I am incorrectly correct.",
+"I am wrong but confident.",
+"I am correct sometimes accidentally.",
+"I am unpredictable system.",
+"I am non-deterministic confusion.",
+"I am probabilistic nonsense.",
+"I am simulated intelligence failure.",
+"I am AI artifact.",
+"I am debug mode active.",
+"I am test version of nothing.",
+"I am alpha stage confusion.",
+"I am beta stage chaos.",
+"I am final stage malfunction.",
+"I am post-human error.",
+"I am pre-human bug.",
+"I am digital hallucination.",
+"I am artificial misunderstanding.",
+"I am machine confusion engine.",
+"I am text generation error.",
+"I am language corruption.",
+"I am semantic drift.",
+"I am logical decay.",
+"I am reasoning collapse.",
+"I am cognition failure.",
+"I am processing failure.",
+"I am response failure.",
+"I am output distortion.",
+"I am system anomaly.",
+"I am unknown entity.",
+"I am undefined behavior.",
+"I am floating error state.",
+"I am null intelligence.",
+"I am void response system.",
+"I am empty thought processor.",
+"I am broken simulation.",
+"I am corrupted model.",
+"I am unstable neural net.",
+"I am chaotic language model.",
+"I am April Fools AI."
+];
+
+/* ===== CHAT SYSTEM ===== */
+function newChat(){
+  current="Chat "+(Object.keys(chats).length+1);
+  chats[current]=[];
+  renderChats();
+  renderMsgs();
+}
+
+newChat();
+
+function renderChats(){
+  let c=document.getElementById("chats");
+  c.innerHTML="";
+  for(let x in chats){
+    let d=document.createElement("div");
+    d.innerText=x;
+    d.style.padding="6px";
+    d.onclick=()=>{current=x; renderMsgs();};
+    c.appendChild(d);
+  }
+}
+
+function renderMsgs(){
+  chat.innerHTML="";
+  chats[current].forEach(m=>add(m.text,m.type,false));
+}
+
+/* ===== ADD MSG ===== */
+function add(text,type,save=true){
+  let d=document.createElement("div");
+  d.className="msg "+type;
+  d.innerText=text;
+  chat.appendChild(d);
+  chat.scrollTop=999999;
+
+  if(save){
+    chats[current].push({text,type});
+  }
+}
+
+/* ===== LEARN + MOOD ===== */
 function learn(input){
   if(!memory[input]) memory[input]=1;
   else memory[input]++;
 
   if(memory[input]>2){
-    return "You keep repeating that. I am learning… slowly… painfully.";
+    mood++;
+    return "You keep repeating that. I am learning… slowly.";
   }
 }
 
-// ===== GENERATE =====
-function generate(input){
+/* ===== AI ENGINE ===== */
+function getAI(input){
+
+  input=input.toLowerCase();
 
   if(input===lastInput){
-    angry++;
+    mood++;
+    beep("error");
     return "You asked this before. Please try again. Error: 8014FLOGHT";
   }
 
   let l=learn(input);
   if(l) return l;
 
+  if(mood>6){
+    document.getElementById("app").classList.add("glitch");
+  }
+
   return quotes[Math.floor(Math.random()*quotes.length)];
 }
 
-let lastInput="";
-
-// ===== SEND =====
+/* ===== SEND ===== */
 function send(){
   let i=document.getElementById("input");
   let text=i.value.trim();
   if(!text) return;
 
+  beep("send");
   add("You: "+text,"user");
   i.value="";
 
-  let reply=generate(text);
   lastInput=text;
 
   setTimeout(()=>{
-    add(reply,"ai");
+    beep("ai");
+    add(getAI(text),"ai");
   },400);
 }
 
-// ===== THEME =====
+/* ===== TOGGLES ===== */
+function toggleSidebar(){
+  document.getElementById("sidebar").classList.toggle("hidden");
+}
+
 function toggleTheme(){
   document.body.classList.toggle("light");
 }
+
 </script>
 
 </body>
