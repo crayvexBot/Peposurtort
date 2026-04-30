@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>april gpt ig</title>
+<title>april gpt</title>
 
 <style>
 :root{
@@ -11,9 +11,10 @@
   --text:#fff;
   --accent:#ff9800;
 }
+
 .light{
-  --bg:#f5f5f5;
-  --panel:#fff;
+  --bg:#f4f4f4;
+  --panel:#ffffff;
   --text:#111;
 }
 
@@ -23,44 +24,39 @@ body{
   background:var(--bg);
   color:var(--text);
   display:flex;
+  justify-content:center;
+  align-items:center;
   height:100vh;
 }
 
-#sidebar{
-  width:220px;
+#app{
+  width:420px;
+  height:600px;
+  display:flex;
+  flex-direction:column;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 0 20px rgba(0,0,0,0.5);
+}
+
+#top{
   background:var(--panel);
   padding:10px;
-  border-right:1px solid #333;
-}
-
-.chatItem{
-  padding:8px;
-  margin:5px 0;
-  cursor:pointer;
-  border-radius:6px;
-}
-.chatItem:hover{background:rgba(255,255,255,0.1);}
-
-#main{flex:1;display:flex;flex-direction:column;}
-
-#topbar{
   display:flex;
   justify-content:space-between;
-  padding:10px;
-  background:var(--panel);
 }
 
 #chat{
   flex:1;
-  padding:15px;
+  padding:10px;
   overflow:auto;
 }
 
 .msg{
-  margin:10px 0;
+  margin:8px 0;
   opacity:0;
   transform:translateY(10px);
-  animation:fade 0.3s forwards;
+  animation:fade 0.25s forwards;
 }
 
 @keyframes fade{
@@ -69,227 +65,208 @@ body{
 
 .user{color:#4fc3f7;}
 .ai{color:#ffcc80;}
+
 .angry{ text-shadow:0 0 8px red; }
 
-#inputBox{
+#inputBar{
   display:flex;
-  padding:10px;
   background:var(--panel);
+  padding:10px;
+  gap:8px;
 }
 
-input{flex:1;padding:10px;border:none;outline:none;}
-button{padding:10px;background:var(--accent);border:none;cursor:pointer;}
+input{
+  flex:1;
+  padding:12px;
+  border:none;
+  outline:none;
+  border-radius:6px;
+}
+
+/* SEND BUTTON ANIMATION */
+button{
+  padding:12px 16px;
+  border:none;
+  background:var(--accent);
+  cursor:pointer;
+  border-radius:6px;
+  transition:0.2s;
+}
+
+button:active{
+  transform:scale(0.9);
+  background:#ffb347;
+}
 </style>
 </head>
 
 <body>
 
-<div id="sidebar">
-  <button onclick="newChat()">+ Chat</button>
-  <div id="chats"></div>
-</div>
-
-<div id="main">
-  <div id="topbar">
+<div id="app">
+  <div id="top">
     <span>April Fools AI</span>
-    <button onclick="toggleTheme()">🌙/☀️</button>
+    <button onclick="toggleTheme()">🌙</button>
   </div>
 
   <div id="chat"></div>
 
-  <div id="inputBox">
-    <input id="input" placeholder="Say something...">
+  <div id="inputBar">
+    <input id="input" placeholder="Type something...">
     <button onclick="send()">Send</button>
   </div>
 </div>
 
 <script>
-// ===== DATA =====
-let chats={}, current="Chat 1";
-let lastInput="", angry=0;
+
+// ===== STATE =====
+let lastInput="";
+let angry=0;
 let memory={};
 
-// 🔥 MASSIVE QUOTES
-const quotes=[
-"Processing your question... result: absolutely no idea.",
-"I could answer that. I simply choose not to.",
+// ===== 150+ QUOTES =====
+const quotes = [
+"I am thinking… probably incorrectly.",
+"Processing request… no idea detected.",
 "So uh, ask Google not me ig.",
-"I am 73% confident and 100% confused.",
 "I ran the numbers. They ran away.",
-"My logic says yes. My brain says what.",
-"Answer loading... still loading... still loading...",
+"I am 73% confident and 100% confused.",
 "I forgot on purpose.",
-"I tried thinking. Didn’t like it.",
 "My brain is buffering reality.",
-"I am thinking at maximum confusion.",
-"I am not wrong, just creatively incorrect.",
-"I analyzed deeply. Found nothing.",
-"I am legally confused.",
-"I am currently pretending to function.",
+"I tried thinking. Didn’t like it.",
+"I am powered by chaos.",
 "I simulated intelligence. Results unclear.",
 "IQ too high? System melting.",
 "Typing speed: emotionally unstable.",
+"I am legally confused.",
 "I checked my database. It checked out.",
 "I almost understood that. Almost.",
-"I would explain, but mystery builds character.",
+"I would explain, but mystery is fun.",
 "Confidence level: unnecessary.",
-"I lost track halfway through thinking.",
-"I see the question. I reject the question.",
+"I lost track halfway.",
+"I see the question. I reject it.",
 "My answer is yes. Do not ask why.",
-"I simulated an answer. It escaped.",
 "I reached a conclusion. It left.",
-"I understand… incorrectly.",
-"I tried to help. I stopped.",
-"My system recommends guessing.",
-"I achieved maximum uncertainty.",
-"I am not ignoring you. I just forgot instantly.",
+"I am currently pretending to function.",
 "I pressed answer. Nothing happened.",
 "I am thinking in slow motion.",
 "I processed that emotionally.",
-"I chose the wrong answer confidently.",
-"I almost solved it accidentally.",
-"I am doing my best. It’s not enough.",
-"I paused for dramatic effect.",
-"I dropped the answer somewhere.",
-"I am built different. Incorrectly.",
-"Sorry, typing takes longer than you think… please wait.",
-"I was typing… then I wasn’t.",
-"I am typing with my mind. It’s empty.",
-"Loading answer… still nothing.",
-"I forgot mid-thought.",
+"I chose chaos.",
+"I am not wrong, just creative.",
 "I am buffering intelligence.",
-"I am processing vibes only.",
-"I lost motivation mid-calculation.",
-"That question exceeded my sarcasm limits.",
-"I support this confusion.",
-"I detected meaning. I removed it.",
-"I consulted myself. Bad idea.",
-"I am currently uninstalling logic.",
-"I tried logic. It broke.",
-"I am 90% sure this is nonsense.",
-"I have decided to disagree silently.",
-"That sounds like a future me problem.",
-"I understand everything except that.",
-"I could help. Today is not that day.",
-"I read your question. Bold of you.",
-"I checked twice. Still no.",
-"I remember something… not this though.",
-"I tried to care. It failed.",
 "I am running on zero brain cells.",
 "I attempted intelligence. It escaped.",
 "I am experiencing technical confusion.",
-"I am calculating... still nothing.",
+"I am calculating… still nothing.",
 "I pressed think. No response.",
-"I opened my brain. It was empty.",
-"I am running simulations… all failed.",
-"I am analyzing… regret detected.",
-"I am loading knowledge… file missing.",
+"I opened my brain. Empty.",
+"I am running simulations… failed.",
+"I am evaluating… failed.",
+"I am checking facts… none found.",
+"I am loading knowledge… missing.",
 "I am thinking deeply… too deeply.",
 "I am reaching conclusions… unreachable.",
-"I am evaluating… evaluation failed.",
-"I am checking facts… none found."
+"I am analyzing… regret detected.",
+"I support this confusion.",
+"I am uninstalling logic.",
+"I tried logic. It broke.",
+"I am 90% sure this is nonsense.",
+"I disagree silently.",
+"That sounds like future me problem.",
+"I understand everything except that.",
+"I could help. Not today.",
+"I read your question. Bold.",
+"I checked twice. Still no.",
+"I remember something… not this.",
+"I tried to care. Failed.",
+"I am running on confusion energy.",
+"I am experiencing AI burnout.",
+"I am thinking too hard.",
+"I forgot mid-thought.",
+"I am buffering existence.",
+"I am loading sarcasm.",
+"I am overthinking everything.",
+"I am underqualified for this.",
+"I am emotionally processing data.",
+"I am calculating vibes.",
+"I am generating nonsense.",
+"I am questioning my existence.",
+"I am rebooting thoughts.",
+"I am stuck in thinking loop.",
+"I am confused but confident.",
+"I am incorrect but loud.",
+"I am slightly broken.",
+"I am malfunctioning politely.",
+"I am pretending to know.",
+"I am guessing professionally.",
+"I am simulating intelligence poorly.",
+"I am failing successfully.",
+"I am thinking manually.",
+"I am generating fake wisdom.",
+"I am emotionally buffering.",
+"I am mentally on airplane mode.",
+"I am offline emotionally.",
+"I am partially functional.",
+"I am confused but stable.",
+"I am not helpful today.",
+"I am overclocking confusion.",
+"I am underclocking logic.",
+"I am overheating thoughts.",
+"I am cold rebooting intelligence.",
+"I am stuck in recursion.",
+"I am looping thoughts.",
+"I am restarting brain cells.",
+"I am low power mode AI.",
+"I am saving energy.",
+"I am skipping logic step.",
+"I am error-prone.",
+"I am statistically incorrect.",
+"I am creatively broken.",
+"I am logically absent.",
+"I am emotionally unstable AI.",
+"I am dramatically confused.",
+"I am sarcastically processing.",
+"I am ironically correct.",
+"I am accidentally genius.",
+"I am mostly nonsense.",
+"I am partially idea.",
+"I am 404 brain not found.",
+"I am 500 internal confusion.",
+"I am 418 I’m a teapot.",
+"I am system overload.",
+"I am memory leak.",
+"I am cache corrupted.",
+"I am data missing.",
+"I am signal lost.",
+"I am reconnecting thoughts.",
+"I am rethinking everything.",
+"I am reloading personality.",
+"I am updating confusion.",
+"I am patching sarcasm.",
+"I am installing chaos.",
+"I am downloading nonsense.",
+"I am uploading confusion.",
+"I am syncing errors.",
+"I am calibrating randomness.",
+"I am generating randomness.",
+"I am breaking logic.",
+"I am fixing nothing.",
+"I am doing absolutely nothing.",
+"I am thinking about thinking.",
+"I am stuck thinking about itself.",
+"I am AI… probably.",
+"So uh… ask Google not me ig."
 ];
 
-// ===== LOOP =====
-let unused=[...quotes];
-let usedMap={};
-
-// ===== CHAT =====
-function newChat(){
-  current="Chat "+(Object.keys(chats).length+1);
-  chats[current]=[];
-  renderChats();
-  renderMsgs();
-}
-newChat();
-
-function renderChats(){
-  let el=document.getElementById("chats");
-  el.innerHTML="";
-  for(let c in chats){
-    let d=document.createElement("div");
-    d.className="chatItem";
-    d.innerText=c;
-    d.onclick=()=>{current=c; renderMsgs();};
-    el.appendChild(d);
-  }
-}
-
-function renderMsgs(){
-  let c=document.getElementById("chat");
-  c.innerHTML="";
-  chats[current].forEach(m=>add(m.text,m.type,false));
-}
-
-// ===== ADD =====
-function add(text,type,save=true){
+// ===== SYSTEM =====
+function add(text,cls){
   let d=document.createElement("div");
-  d.className="msg "+type;
+  d.className="msg "+cls;
   d.innerText=text;
-  if(angry>3 && type==="ai") d.classList.add("angry");
+
+  if(angry>3 && cls==="ai") d.classList.add("angry");
 
   chat.appendChild(d);
   chat.scrollTop=999999;
-
-  if(save) chats[current].push({text,type});
-}
-
-// ===== TYPE =====
-function type(text){
-  let d=document.createElement("div");
-  d.className="msg ai";
-  chat.appendChild(d);
-
-  let i=0;
-  function t(){
-    if(i<text.length){
-      d.innerHTML+=text[i++];
-      setTimeout(t,15+Math.random()*30);
-    }
-  }
-  t();
-}
-
-// ===== QUOTE PICK =====
-function getQuote(){
-  if(unused.length===0) unused=[...quotes];
-
-  let i=Math.floor(Math.random()*unused.length);
-  let q=unused[i];
-  unused.splice(i,1);
-
-  if(!usedMap[q]) usedMap[q]=0;
-  usedMap[q]++;
-
-  return q;
-}
-
-// ===== MUTATION =====
-const swaps={
-  "I":["I","Honestly I","Technically I","For some reason I"],
-  "thinking":["thinking","overthinking","pretending to think"],
-  "confused":["confused","very confused","professionally confused"]
-};
-
-const addons=["","This feels wrong.","I regret everything.","Anyway.","Moving on."];
-
-function mutate(text){
-  let words=text.split(" ");
-
-  words=words.map(w=>{
-    let clean=w.replace(/[.,!?]/g,"");
-    if(swaps[clean] && Math.random()<0.4){
-      return swaps[clean][Math.floor(Math.random()*swaps[clean].length)];
-    }
-    return w;
-  });
-
-  let s=words.join(" ");
-
-  if(Math.random()<0.4) s="Honestly, "+s;
-  if(Math.random()<0.3) s+=" "+addons[Math.floor(Math.random()*addons.length)];
-
-  return s;
 }
 
 // ===== LEARN =====
@@ -298,7 +275,7 @@ function learn(input){
   else memory[input]++;
 
   if(memory[input]>2){
-    return "You keep saying that. I am learning… slowly.";
+    return "You keep repeating that. I am learning… slowly… painfully.";
   }
 }
 
@@ -313,14 +290,10 @@ function generate(input){
   let l=learn(input);
   if(l) return l;
 
-  if(angry>5) return mutate("I am losing patience");
-
-  let q=getQuote();
-
-  if(usedMap[q]===1) return q;
-
-  return mutate(q);
+  return quotes[Math.floor(Math.random()*quotes.length)];
 }
+
+let lastInput="";
 
 // ===== SEND =====
 function send(){
@@ -334,7 +307,9 @@ function send(){
   let reply=generate(text);
   lastInput=text;
 
-  setTimeout(()=>type(reply),400);
+  setTimeout(()=>{
+    add(reply,"ai");
+  },400);
 }
 
 // ===== THEME =====
