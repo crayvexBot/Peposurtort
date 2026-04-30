@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>April Fools AI - Login System</title>
+<title>April Fools AI - Smart Edition</title>
 
 <style>
 :root{
@@ -25,7 +25,7 @@ body{
 
 /* LOGIN */
 #login{
-  width:320px;
+  width:300px;
   background:var(--panel);
   padding:20px;
   border-radius:12px;
@@ -49,15 +49,15 @@ button{
   cursor:pointer;
 }
 
-button:active{
-  transform:scale(0.95);
-}
-
-/* APP */
+/* APP WINDOW */
 #app{
-  width:100%;
-  height:100vh;
+  width:70vw;
+  height:80vh;
   display:none;
+  background:var(--bg);
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 0 30px rgba(0,0,0,0.6);
   flex-direction:row;
 }
 
@@ -67,6 +67,17 @@ button:active{
   background:var(--panel);
   padding:10px;
   overflow:auto;
+  transition:0.3s;
+}
+
+#sidebar.min{
+  width:60px;
+  padding:5px;
+}
+
+#sidebar div{
+  padding:6px;
+  cursor:pointer;
 }
 
 /* CHAT */
@@ -89,11 +100,21 @@ button:active{
   max-width:80%;
   padding:10px;
   border-radius:10px;
+  word-wrap:break-word;
 }
 
-.user{align-self:flex-start;background:#2b8cff;}
-.ai{align-self:flex-end;background:#2a2a2a;color:#ffcc80;}
+.user{
+  align-self:flex-start;
+  background:#2b8cff;
+}
 
+.ai{
+  align-self:flex-end;
+  background:#2a2a2a;
+  color:#ffcc80;
+}
+
+/* INPUT */
 #inputBar{
   display:flex;
   padding:10px;
@@ -101,29 +122,45 @@ button:active{
   gap:8px;
 }
 
+#input{
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  outline:none;
+}
+
+/* GLITCH */
+.glitch{
+  animation:glitch 0.2s infinite;
+}
+
+@keyframes glitch{
+  0%{transform:translate(0);}
+  25%{transform:translate(-2px,2px);}
+  50%{transform:translate(2px,-2px);}
+  75%{transform:translate(-1px,1px);}
+  100%{transform:translate(0);}
+}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div id="login">
-  <h3>April Fools AI Login</h3>
-
+  <h3>Login</h3>
   <input id="user" placeholder="Username">
   <input id="pass" type="password" placeholder="Password">
-
   <button onclick="signup()">Sign Up</button>
   <button onclick="signin()">Sign In</button>
-
-  <small id="msg"></small>
 </div>
 
 <!-- APP -->
 <div id="app">
 
   <div id="sidebar">
-    <b>Chats</b>
+    <button onclick="newChat()">+ Chat</button>
     <div id="chats"></div>
   </div>
 
@@ -142,80 +179,122 @@ button:active{
 
 <script>
 
-/* ================= LOGIN SYSTEM ================= */
+/* ================= LOGIN ================= */
 
 function signup(){
   let u=document.getElementById("user").value;
   let p=document.getElementById("pass").value;
-
   if(!u||!p) return;
 
-  localStorage.setItem("user_"+u,p);
-
-  document.getElementById("msg").innerText="Account created!";
+  localStorage.setItem("user_"+u,JSON.stringify({p}));
+  alert("Account created!");
 }
 
 function signin(){
   let u=document.getElementById("user").value;
   let p=document.getElementById("pass").value;
 
-  let saved=localStorage.getItem("user_"+u);
+  let data=localStorage.getItem("user_"+u);
+  if(!data) return alert("No user");
 
-  if(saved && saved===p){
+  let obj=JSON.parse(data);
+
+  if(obj.p===p){
     localStorage.setItem("session",u);
-    startApp();
-  }else{
-    document.getElementById("msg").innerText="Wrong login!";
-  }
+    start();
+  }else alert("Wrong password");
 }
 
-function startApp(){
+if(localStorage.getItem("session")) start();
+
+function start(){
   document.getElementById("login").style.display="none";
   document.getElementById("app").style.display="flex";
-  initChat();
-}
-
-/* auto login */
-if(localStorage.getItem("session")){
-  startApp();
+  init();
 }
 
 /* ================= CHAT ================= */
 
 let chats={}, current="chat1";
+let lastInput="";
+let memory={};
+let mood=0;
 
-function initChat(){
-  chats[current]=[];
+function init(){
+  chats[current]={name:null,messages:[]};
   renderChats();
 }
 
-function renderChats(){
-  let c=document.getElementById("chats");
-  c.innerHTML="Main Chat";
+function newChat(){
+  current="chat"+Object.keys(chats).length;
+  chats[current]={name:null,messages:[]};
+  renderChats();
 }
 
-function add(text,type){
-  let d=document.createElement("div");
-  d.className="msg "+type;
-  d.innerText=text;
-  chat.appendChild(d);
-  chat.scrollTop=999999;
+/* ================= CHAT NAME ================= */
+
+function genName(t){
+  t=t.toLowerCase();
+  if(t.includes("hi")||t.includes("hello")) return "Greeting Chat";
+  if(t.includes("help")) return "Help Chat";
+  return t.slice(0,12);
 }
+
+/* ================= SMART DETECTOR ================= */
+
+function detectMessageType(text){
+  let t=text.toLowerCase();
+  let clean=t.replace(/[^a-z0-9\s]/gi,"");
+
+  const greet=["hi","hello","hey","yo","sup"];
+  const help=["help","how do","can you","what do i"];
+  const ignored=["nobody asked","who asked","no one asked"];
+
+  if(greet.some(x=>clean.includes(x))) return "greet";
+  if(help.some(x=>clean.includes(x))) return "help";
+
+  if(t.includes("?")||
+     clean.startsWith("what")||
+     clean.startsWith("why")||
+     clean.startsWith("how")) return "question";
+
+  if(ignored.some(x=>clean.includes(x))) return "ignored";
+
+  if(clean.length<4) return "short";
+
+  return "normal";
+}
+
+/* ================= QUOTES ================= */
+
+let quotes=[
+"I am thinking incorrectly.",
+"I am AI probably.",
+"I am 73% confused.",
+"I forgot on purpose.",
+"I am chaos engine.",
+"I attempted logic. Failed.",
+"I am malfunctioning politely.",
+"I am system overload.",
+"I am running on nothing.",
+"I am unstable but active.",
+"I am conceptually broken.",
+"I am thinking too hard.",
+"I am buffering existence."
+];
 
 /* ================= AI ================= */
 
-const quotes=[
-"I am thinking… incorrectly.",
-"I am AI… probably.",
-"I forgot everything.",
-"I am running on confusion.",
-"I am malfunctioning politely.",
-"I am 404 brain not found.",
-"I am system overload.",
-"I am chaos engine."
-];
-
 function getAI(input){
+
+  let type=detectMessageType(input);
+
+  if(type==="greet") return "Hi.... what's wrong";
+  if(type==="help") return "I’ll try… maybe.";
+  if(type==="question") return "That is a dangerous question.";
+  if(type==="ignored") return "oh nooo.. Nobody asked :(";
+  if(type==="short") return "That was very minimal.";
+
   return quotes[Math.floor(Math.random()*quotes.length)];
 }
 
@@ -227,11 +306,52 @@ function send(){
   if(!text) return;
 
   add("You: "+text,"user");
+
+  if(!chats[current].name){
+    chats[current].name=genName(text);
+  }
+
   i.value="";
+  lastInput=text;
 
   setTimeout(()=>{
     add(getAI(text),"ai");
+    renderChats();
   },400);
+}
+
+/* ================= UI ================= */
+
+function add(text,type){
+  let d=document.createElement("div");
+  d.className="msg "+type;
+  d.innerText=text;
+  chat.appendChild(d);
+  chat.scrollTop=999999;
+
+  chats[current].messages.push({text,type});
+}
+
+function renderChats(){
+  let c=document.getElementById("chats");
+  c.innerHTML="";
+
+  for(let x in chats){
+    let d=document.createElement("div");
+    d.innerText=chats[x].name||x;
+    d.onclick=()=>{current=x;renderMsgs();};
+    c.appendChild(d);
+  }
+}
+
+function renderMsgs(){
+  chat.innerHTML="";
+  chats[current].messages.forEach(m=>{
+    let d=document.createElement("div");
+    d.className="msg "+m.type;
+    d.innerText=m.text;
+    chat.appendChild(d);
+  });
 }
 
 </script>
